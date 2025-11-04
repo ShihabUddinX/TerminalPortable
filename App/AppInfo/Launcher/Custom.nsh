@@ -20,5 +20,4 @@ ${SegmentPre}
 	${If} $1 == "ARM"
 		${ReadLauncherConfig} $ProgramExecutable Launch ProgramExecutableARM64
 	${EndIf}
-
 !macroend
