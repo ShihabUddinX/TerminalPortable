@@ -14,6 +14,7 @@ ${SegmentInit}
 	StrCpy $1 $0 3 0
 		
 	${If} $1 == "ARM"
+		${ReadLauncherConfig} $ProgramExecutable Launch ProgramExecutableARM64
 		${SetEnvironmentVariablesPath} FullAppDir "$EXEDIR\App\TerminalARM64"
 		Rename "$EXEDIR\App\Terminal\ProfileGeneratorIcons" "$EXEDIR\App\TerminalARM64\ProfileGeneratorIcons"
 		Rename "$EXEDIR\App\Terminal64\ProfileGeneratorIcons" "$EXEDIR\App\TerminalARM64\ProfileGeneratorIcons"
@@ -23,6 +24,9 @@ ${SegmentInit}
 		Rename "$EXEDIR\App\Terminal64\Images" "$EXEDIR\App\TerminalARM64\Images"
 		Rename "$EXEDIR\App\Terminal\Microsoft.UI.Xaml" "$EXEDIR\App\TerminalARM64\Microsoft.UI.Xaml"
 		Rename "$EXEDIR\App\Terminal64\Microsoft.UI.Xaml" "$EXEDIR\App\TerminalARM64\Microsoft.UI.Xaml"
+		FileOpen $0 "$EXEDIR\App\TerminalARM64\.portable" w ;Opens a Empty File and fills it
+		FileWrite $0 ""
+		FileClose $0 ;Closes the filled file
 	${Else}
 		${If} $Bits = 64
 			${SetEnvironmentVariablesPath} FullAppDir "$EXEDIR\App\Terminal64"
@@ -34,6 +38,9 @@ ${SegmentInit}
 			Rename "$EXEDIR\App\TerminalARM64\Images" "$EXEDIR\App\Terminal64\Images"
 			Rename "$EXEDIR\App\Terminal\Microsoft.UI.Xaml" "$EXEDIR\App\Terminal64\Microsoft.UI.Xaml"
 			Rename "$EXEDIR\App\TerminalARM64\Microsoft.UI.Xaml" "$EXEDIR\App\Terminal64\Microsoft.UI.Xaml"
+			FileOpen $0 "$EXEDIR\App\Terminal64\.portable" w ;Opens a Empty File and fills it
+			FileWrite $0 ""
+			FileClose $0 ;Closes the filled file
 		${Else}
 			${SetEnvironmentVariablesPath} FullAppDir "$EXEDIR\App\Terminal"
 			Rename "$EXEDIR\App\Terminal64\ProfileGeneratorIcons" "$EXEDIR\App\Terminal\ProfileGeneratorIcons"
@@ -44,15 +51,9 @@ ${SegmentInit}
 			Rename "$EXEDIR\App\TerminalARM64\Images" "$EXEDIR\App\Terminal\Images"
 			Rename "$EXEDIR\App\Terminal64\Microsoft.UI.Xaml" "$EXEDIR\App\Terminal\Microsoft.UI.Xaml"
 			Rename "$EXEDIR\App\TerminalARM64\Microsoft.UI.Xaml" "$EXEDIR\App\Terminal\Microsoft.UI.Xaml"
+			FileOpen $0 "$EXEDIR\App\Terminal\.portable" w ;Opens a Empty File and fills it
+			FileWrite $0 ""
+			FileClose $0 ;Closes the filled file
 		${EndIf}
-	${EndIf}
-!macroend
-
-${SegmentPre}
-	ReadRegStr $0 HKLM "HARDWARE\DESCRIPTION\System" "Identifier"
-	StrCpy $1 $0 3 0
-		
-	${If} $1 == "ARM"
-		${ReadLauncherConfig} $ProgramExecutable Launch ProgramExecutableARM64
 	${EndIf}
 !macroend
