@@ -3,8 +3,8 @@ ${SegmentFile}
 
 ${Segment.onInit}
 	ReadRegStr $0 HKLM "Software\Microsoft\Windows NT\CurrentVersion" "CurrentBuild"	
-	${If} $0 < 10240 ;Windows 10
-		MessageBox MB_OK|MB_ICONSTOP "Terminal Portable only runs on Windows 10 or later!"
+	${If} $0 < 19041 ;Windows 10 2004
+		MessageBox MB_OK|MB_ICONSTOP "Terminal Portable only runs on Windows 10 2004 (build 19041) or later!"
 		Abort
 	${EndIf}
 !macroend
