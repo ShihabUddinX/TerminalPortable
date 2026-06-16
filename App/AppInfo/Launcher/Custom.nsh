@@ -1,12 +1,12 @@
 ${SegmentFile}
 !include WinMessages.nsh
 
-${Segment.onInit}
-	ReadRegStr $0 HKLM "Software\Microsoft\Windows NT\CurrentVersion" "CurrentBuild"	
-	${If} $0 < 19041 ;Windows 10 2004
-		MessageBox MB_OK|MB_ICONSTOP "Terminal Portable only runs on Windows 10 2004 (build 19041) or later!"
-		Abort
-	${EndIf}
+${SegmentPrePrimary}
+    ReadRegStr $0 HKLM "Software\Microsoft\Windows NT\CurrentVersion" "CurrentBuild"
+    ${If} $0 < 19041
+        MessageBox MB_OK|MB_ICONSTOP "Terminal Portable only runs on Windows 10 2004 (build 19041) or later!"
+        Abort
+    ${EndIf}
 !macroend
 
 ${SegmentInit}
@@ -24,9 +24,9 @@ ${SegmentInit}
 		Rename "$EXEDIR\App\Terminal64\Images" "$EXEDIR\App\TerminalARM64\Images"
 		Rename "$EXEDIR\App\Terminal\Microsoft.UI.Xaml" "$EXEDIR\App\TerminalARM64\Microsoft.UI.Xaml"
 		Rename "$EXEDIR\App\Terminal64\Microsoft.UI.Xaml" "$EXEDIR\App\TerminalARM64\Microsoft.UI.Xaml"
-		FileOpen $0 "$EXEDIR\App\TerminalARM64\.portable" w ;Opens a Empty File and fills it
+		FileOpen $0 "$EXEDIR\App\TerminalARM64\.portable" w
 		FileWrite $0 ""
-		FileClose $0 ;Closes the filled file
+		FileClose $0
 	${Else}
 		${If} $Bits = 64
 			${SetEnvironmentVariablesPath} FullAppDir "$EXEDIR\App\Terminal64"
@@ -38,9 +38,9 @@ ${SegmentInit}
 			Rename "$EXEDIR\App\TerminalARM64\Images" "$EXEDIR\App\Terminal64\Images"
 			Rename "$EXEDIR\App\Terminal\Microsoft.UI.Xaml" "$EXEDIR\App\Terminal64\Microsoft.UI.Xaml"
 			Rename "$EXEDIR\App\TerminalARM64\Microsoft.UI.Xaml" "$EXEDIR\App\Terminal64\Microsoft.UI.Xaml"
-			FileOpen $0 "$EXEDIR\App\Terminal64\.portable" w ;Opens a Empty File and fills it
+			FileOpen $0 "$EXEDIR\App\Terminal64\.portable" w
 			FileWrite $0 ""
-			FileClose $0 ;Closes the filled file
+			FileClose $0
 		${Else}
 			${SetEnvironmentVariablesPath} FullAppDir "$EXEDIR\App\Terminal"
 			Rename "$EXEDIR\App\Terminal64\ProfileGeneratorIcons" "$EXEDIR\App\Terminal\ProfileGeneratorIcons"
@@ -51,9 +51,18 @@ ${SegmentInit}
 			Rename "$EXEDIR\App\TerminalARM64\Images" "$EXEDIR\App\Terminal\Images"
 			Rename "$EXEDIR\App\Terminal64\Microsoft.UI.Xaml" "$EXEDIR\App\Terminal\Microsoft.UI.Xaml"
 			Rename "$EXEDIR\App\TerminalARM64\Microsoft.UI.Xaml" "$EXEDIR\App\Terminal\Microsoft.UI.Xaml"
-			FileOpen $0 "$EXEDIR\App\Terminal\.portable" w ;Opens a Empty File and fills it
+			FileOpen $0 "$EXEDIR\App\Terminal\.portable" w
 			FileWrite $0 ""
-			FileClose $0 ;Closes the filled file
+			FileClose $0
 		${EndIf}
 	${EndIf}
+!macroend
+
+${SegmentPostPrimary}
+    FindFirst $0 $1 "$EXEDIR\Data\tools\*.exe"
+    ${DoWhile} $1 != ""
+        nsExec::Exec '"$SYSDIR\taskkill.exe" /F /IM "$1"'
+        FindNext $0 $1
+    ${Loop}
+    FindClose $0
 !macroend
