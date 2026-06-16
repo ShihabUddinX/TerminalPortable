@@ -9,7 +9,7 @@ This version is currently in **Dev Test** stage, meaning it's under testing and 
 ## 🧪 Current Status
 
 - 🧩 **Stage:** Development Test (Unofficial / Testing)
-- 🆚 **Version:** v1.24.10621.0 Dev Test 1
+- 🆚 **Version:** v1.24.11321.0 Dev Test 1
 - 📅 **Published at:** [PortableApps.com](https://portableapps.com/node/79548)
 - 🚧 **Note:** This is *not yet an official PortableApps.com release.*
 
@@ -33,8 +33,8 @@ This version is currently in **Dev Test** stage, meaning it's under testing and 
 
 - 📦 **Portable Package:** [Terminal Portable @ PortableApps](https://portableapps.com/node/79548)
 - 💻 **Upstream Project:** [Microsoft Terminal (GitHub)](https://github.com/microsoft/terminal)
-- 🔐 **SHA-256 Checksum:** 24587067eba62759b78d2862969c0af138bd132db33847c3bd35f9329e904734
-
+- 🔐 **SHA-256 Checksum:** 3a8ac0c7143012d532dba225afd9f9cfbc4865662765fe17af52e10e9cbdf27d
+- 
 ## 💡 Why Portable?
 
 - **No Installation Needed:** Perfect for testing environments or restricted PCs
