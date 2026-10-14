@@ -145,11 +145,19 @@ jobs:
         run: |
           $version = "${{ steps.release.outputs.version }}"
           $displayVersion = $version -replace '\.0$', ''
-          $path = "TerminalPortable/App/AppInfo/appinfo.ini"
 
-          if (-not (Test-Path $path)) {
-            throw "appinfo.ini not found at $path"
+          # Find appinfo.ini automatically in the repository.
+          $files = Get-ChildItem -Path . -Filter "appinfo.ini" -File -Recurse |
+            Where-Object { $_.FullName -notmatch '[\\/]\.git[\\/]' }
+
+          if (-not $files) {
+            throw "appinfo.ini was not found anywhere in the repository."
           }
+
+          $file = $files | Select-Object -First 1
+          $path = $file.FullName
+
+          Write-Host "Updating: $path"
 
           $lines = Get-Content -LiteralPath $path
           $inVersion = $false
@@ -180,13 +188,13 @@ jobs:
           }
 
           if (-not $foundPackage -or -not $foundDisplay) {
-            throw "PackageVersion or DisplayVersion is missing from [Version]"
+            throw "PackageVersion or DisplayVersion was not found in the [Version] section of $path"
           }
 
           Set-Content -LiteralPath $path -Value $lines -Encoding UTF8
 
-          Write-Host "PackageVersion=$version"
-          Write-Host "DisplayVersion=$displayVersion"
+          Write-Host "Updated PackageVersion=$version"
+          Write-Host "Updated DisplayVersion=$displayVersion"
 
       - name: Commit and push changes
         id: commit
