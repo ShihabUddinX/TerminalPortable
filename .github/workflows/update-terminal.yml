@@ -196,6 +196,57 @@ jobs:
           Write-Host "Updated PackageVersion=$version"
           Write-Host "Updated DisplayVersion=$displayVersion"
 
+      - name: Build PAF package
+        id: paf
+        shell: pwsh
+        run: |
+          $version = "${{ steps.release.outputs.version }}"
+
+          $installer = Join-Path $env:GITHUB_WORKSPACE `
+            "PortableApps.comInstaller\PortableApps.comInstaller.exe"
+
+          $packageRoot = Join-Path $env:GITHUB_WORKSPACE "TerminalPortable"
+          $parent = Split-Path $packageRoot -Parent
+          $output = Join-Path $parent "TerminalPortable_${version}.paf.exe"
+
+          if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {
+            throw "PortableApps.comInstaller.exe not found: $installer"
+          }
+
+          if (-not (Test-Path -LiteralPath $packageRoot -PathType Container)) {
+            throw "TerminalPortable directory not found: $packageRoot"
+          }
+
+          # Pass the package directory as the requested argument.
+          # Replace this invocation with the installer's actual
+          # package-build CLI syntax once confirmed.
+          $arguments = @("`"$packageRoot`"")
+
+          Write-Host "Package directory: $packageRoot"
+          Write-Host "Expected output: $output"
+
+          $process = Start-Process `
+            -FilePath $installer `
+            -ArgumentList $arguments `
+            -Wait `
+            -PassThru
+
+          if ($process.ExitCode -ne 0) {
+            throw "PortableApps.com Installer exited with code $($process.ExitCode)"
+          }
+
+          # Do not assume the installer created the expected file.
+          if (-not (Test-Path -LiteralPath $output -PathType Leaf)) {
+            throw "Expected PAF package was not generated: $output. Confirm the installer's supported build arguments and output location."
+          }
+
+          if ((Get-Item -LiteralPath $output).Length -eq 0) {
+            throw "Generated PAF package is empty."
+          }
+
+          "path=$output" >> $env:GITHUB_OUTPUT
+          Write-Host "PAF package validated: $output"
+
       - name: Commit and push changes
         shell: pwsh
         run: |
