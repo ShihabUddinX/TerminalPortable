@@ -197,62 +197,32 @@ jobs:
           Write-Host "Updated DisplayVersion=$displayVersion"
 
       - name: Commit and push changes
-        id: commit
         shell: pwsh
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add TerminalPortable/App/Terminal `
-                  TerminalPortable/App/Terminal64 `
-                  TerminalPortable/App/TerminalARM64 `
-                  TerminalPortable/App/AppInfo/appinfo.ini
+          # Stage all tracked and newly downloaded files.
+          git add -A
 
-          git diff --cached --quiet
-          if ($LASTEXITCODE -eq 0) {
-            Write-Host "No changes to commit."
-            "changed=false" >> $env:GITHUB_OUTPUT
-          } else {
-            git commit -m "Update Windows Terminal to ${{ steps.release.outputs.version }}"
-            git push
-            "changed=true" >> $env:GITHUB_OUTPUT
-          }
+          # Show exactly what will be committed.
+          git status --short
 
-      - name: Create portable package
-        if: steps.commit.outputs.changed == 'true'
-        shell: pwsh
-        run: |
-          $version = "${{ steps.release.outputs.version }}"
-          $package = Join-Path $env:RUNNER_TEMP "TerminalPortable-$version.zip"
-
-          if (-not (Test-Path "TerminalPortable")) {
-            throw "TerminalPortable directory not found."
-          }
-
-          Compress-Archive `
-            -Path "TerminalPortable" `
-            -DestinationPath $package `
-            -CompressionLevel Optimal `
-            -Force
-
-          "PACKAGE_PATH=$package" >> $env:GITHUB_ENV
-
-      - name: Create GitHub Release
-        if: steps.commit.outputs.changed == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: pwsh
-        run: |
-          $version = "${{ steps.release.outputs.version }}"
-          $tag = "v$version"
-
-          gh release view $tag --repo "${{ github.repository }}" 2>$null
-          if ($LASTEXITCODE -eq 0) {
-            Write-Host "Release $tag already exists; skipping duplicate release."
+          if (git diff --cached --quiet) {
+            Write-Host "No changes detected. Nothing to commit."
             exit 0
           }
 
-          gh release create $tag "$env:PACKAGE_PATH" `
-            --repo "${{ github.repository }}" `
-            --title "TerminalPortable $version" `
-            --notes "Updated portable Windows Terminal builds for x86, x64, and ARM64."
+          git commit -m "Update Windows Terminal to ${{ steps.release.outputs.version }}"
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Git commit failed."
+          }
+
+          git push origin "HEAD:${{ github.ref_name }}"
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Git push failed."
+          }
+
+          Write-Host "Changes committed and pushed successfully."
