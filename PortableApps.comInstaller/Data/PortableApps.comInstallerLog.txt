@@ -1,0 +1,17 @@
+Processing script file: "C:\Users\muham\Documents\GitHub\TerminalPortable\Other\Source\PortableApps.comInstaller.nsi" (UTF16LE)
+
+Processed 1 file, writing output (x86-unicode):
+
+Output: "C:\Users\muham\Documents\GitHub\TerminalPortable_1.25.2733.paf.exe"
+Install: 4 pages (256 bytes), 1 section (1 required) (16408 bytes), 2551 instructions (71428 bytes), 5327 strings (375318 bytes), 88 language tables (28688 bytes).
+Datablock optimizer saved 17478 KiB (~16.4%).
+
+Using lzma (compress whole) compression.
+
+EXE header size:              155648 / 38912 bytes
+Install code:                          (492586 bytes)
+Install data:                          (90574449 bytes)
+Compressed data:            17571207 / 91067035 bytes
+CRC (0x961C392F):                  4 / 4 bytes
+
+Total size:                 17726859 / 91105951 bytes (19.4%)
