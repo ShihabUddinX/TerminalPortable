@@ -215,7 +215,7 @@ jobs:
           }
 
           $packageRoot = $exe.Directory.FullName
-          $parent = Split-Path $packageRoot -Parent -Parent
+          $parent = Split-Path (Split-Path $packageRoot -Parent) -Parent
           $output = Join-Path $parent "TerminalPortable_${version}.paf.exe"
 
           if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {
