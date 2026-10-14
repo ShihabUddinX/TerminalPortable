@@ -196,16 +196,25 @@ jobs:
           Write-Host "Updated PackageVersion=$version"
           Write-Host "Updated DisplayVersion=$displayVersion"
 
+
       - name: Build PAF package
         id: paf
         shell: pwsh
         run: |
           $version = "${{ steps.release.outputs.version }}"
+          $installer = Join-Path $env:GITHUB_WORKSPACE "PortableApps.comInstaller\PortableApps.comInstaller.exe"
 
-          $installer = Join-Path $env:GITHUB_WORKSPACE `
-            "PortableApps.comInstaller\PortableApps.comInstaller.exe"
+          # Find the actual package root by locating TerminalPortable.exe.
+          $exe = Get-ChildItem -Path $env:GITHUB_WORKSPACE `
+            -Filter "TerminalPortable.exe" -File -Recurse |
+            Where-Object { $_.FullName -notmatch '[\\/]\.git[\\/]' } |
+            Select-Object -First 1
 
-          $packageRoot = Join-Path $env:GITHUB_WORKSPACE "TerminalPortable"
+          if (-not $exe) {
+            throw "TerminalPortable.exe was not found in the repository."
+          }
+
+          $packageRoot = $exe.Directory.FullName
           $parent = Split-Path $packageRoot -Parent
           $output = Join-Path $parent "TerminalPortable_${version}.paf.exe"
 
@@ -213,39 +222,31 @@ jobs:
             throw "PortableApps.comInstaller.exe not found: $installer"
           }
 
-          if (-not (Test-Path -LiteralPath $packageRoot -PathType Container)) {
-            throw "TerminalPortable directory not found: $packageRoot"
-          }
-
-          # Pass the package directory as the requested argument.
-          # Replace this invocation with the installer's actual
-          # package-build CLI syntax once confirmed.
-          $arguments = @("`"$packageRoot`"")
-
-          Write-Host "Package directory: $packageRoot"
+          Write-Host "Package root: $packageRoot"
           Write-Host "Expected output: $output"
 
+          # IMPORTANT: Replace this argument with the installer's
+          # actual supported package-building command if required.
           $process = Start-Process `
             -FilePath $installer `
-            -ArgumentList $arguments `
+            -ArgumentList "`"$packageRoot`"" `
             -Wait `
             -PassThru
 
           if ($process.ExitCode -ne 0) {
-            throw "PortableApps.com Installer exited with code $($process.ExitCode)"
+            throw "Installer failed with exit code $($process.ExitCode)"
           }
 
-          # Do not assume the installer created the expected file.
           if (-not (Test-Path -LiteralPath $output -PathType Leaf)) {
-            throw "Expected PAF package was not generated: $output. Confirm the installer's supported build arguments and output location."
+            throw "PAF output not found: $output. The installer may require different command-line arguments."
           }
 
           if ((Get-Item -LiteralPath $output).Length -eq 0) {
-            throw "Generated PAF package is empty."
+            throw "Generated PAF file is empty."
           }
 
           "path=$output" >> $env:GITHUB_OUTPUT
-          Write-Host "PAF package validated: $output"
+          Write-Host "PAF package generated successfully."
 
       - name: Commit and push changes
         shell: pwsh
