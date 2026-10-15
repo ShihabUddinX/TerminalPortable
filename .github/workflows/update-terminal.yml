@@ -101,7 +101,7 @@ jobs:
             }
 
             $source = $exe.Directory.FullName
-            $target = Join-Path "TerminalPortable/App" $architectures[$arch]
+            $target = Join-Path "App" $architectures[$arch]
 
             if (-not (Test-Path $target)) {
               New-Item -ItemType Directory -Force -Path $target | Out-Null
