@@ -52,84 +52,72 @@ jobs:
         run: |
           $version = "${{ steps.release.outputs.version }}"
           $temp = Join-Path $env:RUNNER_TEMP "terminal-update"
+
           New-Item -ItemType Directory -Force -Path $temp | Out-Null
 
-          $headers = @{
-            Accept = "application/vnd.github+json"
-            "X-GitHub-Api-Version" = "2022-11-28"
-          }
-
-          $release = Invoke-RestMethod `
-            -Uri "https://api.github.com/repos/microsoft/terminal/releases/latest" `
-            -Headers $headers
-
           $architectures = @{
-            x86    = "Terminal"
-            x64    = "Terminal64"
-            arm64  = "TerminalARM64"
+            x86   = "Terminal"
+            x64   = "Terminal64"
+            arm64 = "TerminalARM64"
           }
 
-          foreach ($arch in $architectures.Keys) {
+          foreach ($arch in @("x86", "x64", "arm64")) {
             $filename = "Microsoft.WindowsTerminal_${version}_${arch}.zip"
-
-            $asset = $release.assets |
-              Where-Object { $_.name -eq $filename } |
-              Select-Object -First 1
-
-            if (-not $asset) {
-              throw "Required release asset not found: $filename"
-            }
-
-            $destination = Join-Path $temp $filename
-
-            Write-Host "Downloading $filename"
-            Invoke-WebRequest `
-              -Uri $asset.browser_download_url `
-              -OutFile $destination
-
-            if ((Get-Item $destination).Length -eq 0) {
-              throw "Downloaded file is empty: $filename"
-            }
-
+            $url = "https://github.com/microsoft/terminal/releases/latest/download/$filename"
+            $zip = Join-Path $temp $filename
             $extract = Join-Path $temp $arch
+
+            Write-Host "Downloading: $url"
+
+            Invoke-WebRequest `
+              -Uri $url `
+              -OutFile $zip `
+              -MaximumRedirection 10
+
+            if (-not (Test-Path $zip) -or (Get-Item $zip).Length -eq 0) {
+              throw "Download failed or ZIP is empty: $filename"
+            }
+
+            # Validate ZIP integrity before extracting.
+            $archive = [System.IO.Compression.ZipFile]::OpenRead($zip)
+            try {
+              if ($archive.Entries.Count -eq 0) {
+                throw "ZIP archive is empty: $filename"
+              }
+            }
+            finally {
+              $archive.Dispose()
+            }
+
             New-Item -ItemType Directory -Force -Path $extract | Out-Null
+            Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
 
-            Expand-Archive `
-              -LiteralPath $destination `
-              -DestinationPath $extract `
-              -Force
-
-            $exe = Get-ChildItem $extract `
-              -Filter "WindowsTerminal.exe" `
-              -File -Recurse |
+            $exe = Get-ChildItem -LiteralPath $extract `
+              -Filter "WindowsTerminal.exe" -File -Recurse |
               Select-Object -First 1
 
             if (-not $exe) {
-              throw "WindowsTerminal.exe missing from $filename"
+              throw "WindowsTerminal.exe not found in $filename"
             }
 
             $source = $exe.Directory.FullName
-            $target = Join-Path "App" $architectures[$arch]
+            $target = Join-Path "TerminalPortable/App" $architectures[$arch]
 
             if (-not (Test-Path $target)) {
               New-Item -ItemType Directory -Force -Path $target | Out-Null
             }
 
-            # Preserve portable settings and the portable-mode marker.
+            # Remove old application files but preserve portable settings.
             Get-ChildItem -LiteralPath $target -Force |
               Where-Object {
                 $_.Name -ne ".portable" -and $_.Name -ne "settings"
               } |
               Remove-Item -Recurse -Force
 
-            # Copy the extracted package files.
-            Copy-Item `
-              -Path (Join-Path $source "*") `
-              -Destination $target `
-              -Recurse -Force
+            Copy-Item -Path (Join-Path $source "*") `
+              -Destination $target -Recurse -Force
 
-            # Copy any other extracted files/directories if the archive
-            # contains assets alongside the executable's directory.
+            # Copy remaining top-level archive contents if present.
             Get-ChildItem -LiteralPath $extract -Force |
               Where-Object { $_.FullName -ne $source } |
               ForEach-Object {
@@ -137,7 +125,7 @@ jobs:
                   -Destination $target -Recurse -Force
               }
 
-            Write-Host "Updated $target"
+            Write-Host "Updated $target from $filename"
           }
 
       - name: Update appinfo.ini version
