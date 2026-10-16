@@ -1,7 +1,7 @@
-
 ${SegmentFile}
 !include WinMessages.nsh
 !include "StrFunc.nsh"
+Var strPath
 ${StrRep}
 
 ${SegmentPrePrimary}
@@ -103,6 +103,32 @@ ${SegmentInit}
             FileClose $0
         ${EndIf}
     ${EndIf}
+
+    ${GetParent} $EXEDIR $1
+	${GetParent} $EXEDIR $1
+	
+	${If} ${FileExists} "$1\CommonFiles\Java64\bin\java.exe"
+	${AndIf} $Bits = 64
+		StrCpy $strPath "$1\CommonFiles\Java64\bin"
+	${ElseIf} ${FileExists} "$1\CommonFiles\JDK64\jre\bin\java.exe"
+	${AndIf} $Bits = 64
+		StrCpy $strPath "$1\CommonFiles\JDK64\jre\bin"
+	${ElseIf} ${FileExists} "$1\CommonFiles\OpenJDKJRE64\java.exe"
+	${AndIf} $Bits = 64
+		StrCpy $strPath "$1\CommonFiles\OpenJDKJRE64\bin"
+	${ElseIf} ${FileExists} "$1\CommonFiles\OpenJDK64\bin\java.exe"
+	${AndIf} $Bits = 64
+		StrCpy $strPath "$1\CommonFiles\OpenJDK64\bin"
+	${ElseIf} ${FileExists} "$1\CommonFiles\Java\bin\java.exe"
+		StrCpy $strPath "$1\CommonFiles\Java\bin"
+	${ElseIf} ${FileExists} "$1\CommonFiles\JDK\jre\bin\java.exe"
+		StrCpy $strPath "$1\CommonFiles\JDK\jre\bin"
+	${ElseIf} ${FileExists} "$1\CommonFiles\OpenJDKJRE\bin\java.exe"
+		StrCpy $strPath "$1\CommonFiles\OpenJDKJRE\bin"
+	${ElseIf} ${FileExists} "$1\CommonFiles\OpenJDK\bin\java.exe"
+		StrCpy $strPath "$1\CommonFiles\OpenJDK\bin"
+	${EndIf}
+    ${SetEnvironmentVariablesPath} JAVA_HOME "$strPath"
 !macroend
 
 
